@@ -4,6 +4,7 @@ struct Node
     Node *left;
     Node *right;
     int id;
+    int explored;
 };
 
 // Binary trees are then a pointer to the root node of the tree.
@@ -24,6 +25,7 @@ struct Queue
     Item *last;
 };
 
+// Small simple arena like type
 struct Scratch
 {
     char *mem;

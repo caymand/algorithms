@@ -61,16 +61,33 @@ Node* dequeue(Queue *Q)
 // Breadth first traversal of the tree
 void bft(Scratch *scratch, BinaryTree tree)
 {
-    int depth = 0;
+    // Mark the explored node by the explore depth
+    int depth = 0; // parent depth
     Queue Q = {};
     Node *root = tree;
+    root->explored = 0;
 
     enqueue(scratch, &Q, root);
     for (Node *node = dequeue(&Q); node != nullptr; node = dequeue(&Q))
     {
-        printf("Node: %d\n", node->id);
-        
-    }    
+        if (depth < node->explored)
+        {
+            puts("\n");
+            depth++;
+        }                
+        printf("%d ", node->id);        
+        if (node->left != nullptr && node->left->explored < 0)            
+        {
+            enqueue(scratch, &Q, node->left);
+            node->left->explored = depth + 1;
+        }
+        if (node->right != nullptr && node->right->explored < 0)
+        {
+            enqueue(scratch, &Q, node->right);
+            node->right->explored = depth + 1;
+        }
+    }
+    puts("\n");
 }
     
 int main(int argc, char* argv[]) 
@@ -85,15 +102,25 @@ int main(int argc, char* argv[])
         .count = 0,
         .capacity = max_size
     };
-    
-    Node child1 = {};
-    child1.id = 1;
-    Node child2 = {};
-    child2.id = 2;
-    Node child3 = {&child1, nullptr};
-    child3.id = 3;
-    Node root = {&child3, &child2};
-    root.id = 4;
+
+    /*
+      Input:
+        4
+      3   2
+     1 0 0
+
+      Output:
+        4
+        3 2
+        1 0
+     */
+
+    Node child0 = {nullptr, nullptr, 0, -1};
+    Node child1 = {nullptr, nullptr, 1, -1};
+    Node child2 = {nullptr, nullptr, 2, -1};
+    Node child3 = {nullptr, &child0, 3, -1};
+    Node child4 = {&child2, &child1, 4, -1};
+    Node root   = {&child4, &child3, 5, -1};
     BinaryTree tree = &root;
     
     printf("This is a test\n");
