@@ -15,5 +15,5 @@ struct Arena
 };    
 
 void MemDecommit(void *ptr, u64 size);
-void MemCommit(void *ptr, u64 size);
+u64 MemCommit(void *ptr, u64 size);
 void* MemReserve(u64 size);

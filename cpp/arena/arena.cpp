@@ -1,15 +1,3 @@
-// Platoform headers
-#include <Windows.h>
-#include <Memoryapi.h>
-
-#include <stdio.h>
-#include <assert.h>
-
-// My headers
-#include "types.h"
-#include "math.h"
-#include "arena.h"
-
 // OS Specific allocation primitives.
 
 // Reserve some memory. Rounds to nearest gigabyte.
@@ -39,7 +27,8 @@ u64 PageSize()
 
 
 // Commits pages of virtual memory.
-void MemCommit(void *ptr, u64 size)
+// Returns in bytes the ammount of memory commited.
+u64 MemCommit(void *ptr, u64 size)
 {    
     u32 page_size = PageSize();
 
@@ -49,7 +38,7 @@ void MemCommit(void *ptr, u64 size)
     u64 pages_bytes = upper_bound - excess;
     
     VirtualAlloc(ptr, pages_bytes, MEM_COMMIT, PAGE_READWRITE);
-    return;
+    return pages_bytes;
 }
 
 // Decomits all pages contained in the interval [ptr, ptr + size].
@@ -57,11 +46,6 @@ void MemDecommit(void *ptr, u64 size)
 {
     // No need to find nearest page. This is done automatically
     VirtualFree(ptr, size, MEM_DECOMMIT);
-}
-
-void* ArenaPush(Arena *arena, u64 size)
-{
-    return nullptr;
 }
 
 // Allocate an arena with size reserved virtual memory.
@@ -90,12 +74,28 @@ void ArenaDestroy(Arena *arena)
     MemDecommit(arena, arena->size);
 }
 
-
-int main()
+// TODO: Alignment
+void* ArenaPush(Arena *arena, u64 size)
 {
-    Arena *arena = ArenaAlloc(Gigabytes(1));
-    char *str = (char *)arena->base + arena->pos;
-    char hello_world[] = "Hello, World!";
-    memcpy(str, hello_world, strlen(hello_world));
-    puts(str);
+    void *result = nullptr;
+    // In case an allocation is made that exceeds the arena size.
+    assert(arena->pos + size < arena->size);
+
+    result = arena->base + arena->pos;
+    arena->pos += size;
+    // In case we need to commmit more pages to satisfy the allocation.
+    if (arena->commit_pos < arena->pos)
+    {
+        // Bytes needed to be committed to satisfy the allocation.        
+        u64 to_commit = arena->pos - arena->commit_pos;        
+        u64 commited_bytes = MemCommit(arena->base + arena->commit_pos,
+                                       to_commit);
+        assert(commited_bytes); // Always commit some pages.
+        arena->commit_pos += commited_bytes;
+    }
+    
+    return result;
 }
+
+#define ArenaPushStruct(A, T) (ArenaPush((A), sizeof(T)))
+#define ArenaPushArray(A, T, C) ((T *) (ArenaPush((A), sizeof(T) * (C))))
