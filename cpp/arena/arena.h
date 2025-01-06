@@ -14,6 +14,18 @@ struct Arena
     u8 *base;
 };    
 
+// Platform specific functions
 void MemDecommit(void *ptr, u64 size);
 u64 MemCommit(void *ptr, u64 size);
 void* MemReserve(u64 size);
+
+// Arena API functions
+Arena* ArenaAlloc(u64 size);
+void ArenaDestroy(Arena *arena);
+void* ArenaPush(Arena *arena, u64 size);
+void ArenaPopTo(Arena* arena, u64 pos);
+void ArenaPop(Arena* arena, u64 size);
+
+#define ArenaPushStruct(A, T) (ArenaPush((A), sizeof(T)))
+#define ArenaPushArray(A, T, C) ((T *) (ArenaPush((A), sizeof(T) * (C))))
+

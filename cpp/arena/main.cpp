@@ -15,6 +15,9 @@
 #include "arena.h"
 #include "arena.cpp"
 
+#include "dynamic_array.h"
+#include "dynamic_array.cpp"
+
 int main()
 {
     Arena *arena = ArenaAlloc(Gigabytes(1));

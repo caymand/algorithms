@@ -97,5 +97,42 @@ void* ArenaPush(Arena *arena, u64 size)
     return result;
 }
 
-#define ArenaPushStruct(A, T) (ArenaPush((A), sizeof(T)))
-#define ArenaPushArray(A, T, C) ((T *) (ArenaPush((A), sizeof(T) * (C))))
+/*
+  |       c'  p'    p   c
+ */
+void ArenaPopTo(Arena* arena, u64 pos)
+{
+    assert(pos <= arena->pos);
+    
+    u64 new_pos = max(sizeof(Arena), pos);
+    arena->pos = new_pos;
+    u64 page_size = PageSize();
+    u64 commit_pos_upper_bound = arena->pos + (page_size - 1);
+    u64 commit_pos_excess = commit_pos_upper_bound % page_size;    
+    u64 commit_pos_aligned_to_page = commit_pos_upper_bound - commit_pos_excess;
+
+    // If the new pos falls into a new page, decommit the old pages.
+    // TODO: Should have a threshold to avoid thrashing.
+    if (commit_pos_aligned_to_page < arena->commit_pos)
+    {
+        u64 decommit_size = arena->commit_pos - commit_pos_aligned_to_page;
+        MemDecommit(arena->base + commit_pos_aligned_to_page, decommit_size);
+        arena->commit_pos -= decommit_size;
+    }    
+}
+
+void ArenaPop(Arena* arena, u64 size)
+{
+    // In case you try to pop more than the arena size, pop back to the first
+    // availble memory.
+    u64 size_to_pop = min(arena->pos, size);   
+    u64 new_pos = arena->pos - size_to_pop;
+    // We first place the Arena in the memory of the arena.
+    u64 min_pos = sizeof(Arena);
+    new_pos = max(min_pos, new_pos);
+    ArenaPopTo(arena, new_pos);
+}
+
+    
+
+
