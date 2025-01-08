@@ -1,29 +1,15 @@
 #include <stdio.h>
 #include <assert.h>
 #include <stdlib.h>
-#include <malloc.h>
-#include "types.h"
+#include "binarytree.h"
 
-#define MB 1000000
+// My library dependencies
+#include "arena/arena_inc.h"
+#include "arena/arena_inc.cpp"
 
-static int node_id = 0;
-
-char* scratch_alloc(Scratch *scratch, unsigned long bytes)
-{
-    char *mem = scratch->mem;
-    
-    scratch->count += bytes;
-    assert(scratch->count < scratch->capacity);
-    scratch->mem += bytes;
-
-    return mem;
-}
-
-#define alloc_type(T, scratch) ((T*) scratch_alloc((scratch), sizeof(T)))
-
-void enqueue(Scratch *scratch, Queue *Q, Node *node)
+void enqueue(Arena *scratch, Queue *Q, Node *node)
 {    
-    Item *item = alloc_type(Item, scratch);
+    Item *item = ArenaPushStruct(scratch, Item);
     item->node = node;
     item->next = nullptr;    
     
@@ -59,7 +45,7 @@ Node* dequeue(Queue *Q)
 }
 
 // Breadth first traversal of the tree
-void bft(Scratch *scratch, BinaryTree tree)
+void bft(Arena *scratch, BinaryTree tree)
 {
     // Mark the explored node by the explore depth
     int depth = 0; // parent depth
@@ -92,27 +78,19 @@ void bft(Scratch *scratch, BinaryTree tree)
     
 int main(int argc, char* argv[]) 
 {
-    constexpr size_t max_size = 10 * MB;
-    //char scratch_buf[max_size] = {0};
-    char *scratch_buf = (char *) malloc(max_size);
-    assert(scratch_buf);
 
-    Scratch scratch_mem = {
-        .mem = scratch_buf,
-        .count = 0,
-        .capacity = max_size
-    };
+    Arena *scratch = ArenaAlloc(Gigabytes(1));
 
     /*
       Input:
-        4
-      3   2
-     1 0 0
+        5
+      4   3
+     2 1   0
 
       Output:
-        4
-        3 2
-        1 0
+        5
+        4 3
+        2 1 0
      */
 
     Node child0 = {nullptr, nullptr, 0, -1};
@@ -122,10 +100,9 @@ int main(int argc, char* argv[])
     Node child4 = {&child2, &child1, 4, -1};
     Node root   = {&child4, &child3, 5, -1};
     BinaryTree tree = &root;
-    
-    printf("This is a test\n");
+        
 
-    bft(&scratch_mem, tree);
+    bft(scratch, tree);
 
     return 0;
 }
