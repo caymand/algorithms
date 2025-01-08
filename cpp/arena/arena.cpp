@@ -1,4 +1,4 @@
-// OS Specific allocation primitives.
+/* OS Specific allocation primitives. */
 
 // Reserve some memory. Rounds to nearest gigabyte.
 void* MemReserve(u64 size)
@@ -97,9 +97,6 @@ void* ArenaPush(Arena *arena, u64 size)
     return result;
 }
 
-/*
-  |       c'  p'    p   c
- */
 void ArenaPopTo(Arena* arena, u64 pos)
 {
     assert(pos <= arena->pos);
@@ -133,6 +130,7 @@ void ArenaPop(Arena* arena, u64 size)
     ArenaPopTo(arena, new_pos);
 }
 
+// TODO: Arena clear
     
 
 

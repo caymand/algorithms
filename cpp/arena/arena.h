@@ -26,6 +26,7 @@ void* ArenaPush(Arena *arena, u64 size);
 void ArenaPopTo(Arena* arena, u64 pos);
 void ArenaPop(Arena* arena, u64 size);
 
-#define ArenaPushStruct(A, T) (ArenaPush((A), sizeof(T)))
+#define ArenaPushStruct(A, T) ((T*) ArenaPush((A), sizeof(T)))
 #define ArenaPushArray(A, T, C) ((T *) (ArenaPush((A), sizeof(T) * (C))))
+#define ArenaPopStruct(A, T) (ArenaPop((A), sizeof(T)))
 
